@@ -202,8 +202,77 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        "*** My code ***"
+        def alphaBetaSearch(state, depth, alpha, beta, agentIndex):
+            if self.isTerminal(state, depth):
+                return self.evaluationFunction(state), None
+
+            if agentIndex == 0:  # Pac-Man's turn (Maximizing)
+                return self.maxValue(state, depth, alpha, beta)
+            else:  # Ghost's turn (Minimizing)
+                return self.minValue(state, depth, alpha, beta, agentIndex)
+
+        _, action = alphaBetaSearch(gameState, self.depth, float('-inf'), float('inf'), 0)
+        return action
+
+    def maxValue(self, state, depth, alpha, beta):
+        bestValue = float('-inf')
+        bestAction = None
+        legalActions = state.getLegalActions(0)  # Get Pac-Man's legal actions
+
+        if not legalActions:
+            return self.evaluationFunction(state), None
+
+        for action in legalActions:
+            successor = state.generateSuccessor(0, action)
+            value, _ = self.alphaBetaSearch(successor, depth, alpha, beta, 1)
+
+            if value > bestValue:
+                bestValue = value
+                bestAction = action
+
+            if bestValue >= beta:
+                return bestValue, bestAction
+
+            alpha = max(alpha, bestValue)
+
+        return bestValue, bestAction
+
+    def minValue(self, state, depth, alpha, beta, agentIndex):
+        bestValue = float('inf')
+        bestAction = None
+        legalActions = state.getLegalActions(agentIndex)  # Get Ghost's legal actions
+
+        if not legalActions:
+            return self.evaluationFunction(state), None
+
+        nextAgentIndex = (agentIndex + 1) % state.getNumAgents()
+
+        for action in legalActions:
+            successor = state.generateSuccessor(agentIndex, action)
+            if nextAgentIndex == 0:  # If the next agent is Pac-Man
+                value, _ = self.alphaBetaSearch(successor, depth - 1, alpha, beta, nextAgentIndex)
+            else:  # If the next agent is a ghost
+                value, _ = self.alphaBetaSearch(successor, depth, alpha, beta, nextAgentIndex)
+
+            if value < bestValue:
+                bestValue = value
+                bestAction = action
+
+            if bestValue <= alpha:
+                return bestValue, bestAction
+
+            beta = min(beta, bestValue)
+
+        return bestValue, bestAction
+
+    def isTerminal(self, state, depth):
+        return state.isWin() or state.isLose() or depth == 0
+
+    def evaluationFunction(self, state):
+        # Simple evaluation function; you might want to replace this with something more sophisticated
+        return state.getScore()
+        
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
